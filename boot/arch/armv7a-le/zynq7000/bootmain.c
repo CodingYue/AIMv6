@@ -11,26 +11,12 @@
 #include <config.h>
 
 #define PRELOAD_VECTOR_BASE	0x1ff00000
-#define MBR_SIZE 446
+#define PT_LOAD 1
 
-void (*uart_init)(void) = (void *)(PRELOAD_VECTOR_BASE + 0x4);
-void (*uart_enable)(void) = (void *)(PRELOAD_VECTOR_BASE + 0x8);
-void (*uart_spin_puts)(const char *) = (void *)(PRELOAD_VECTOR_BASE + 0xC);
-void (*puthex)(u32) = (void *) (PRELOAD_VECTOR_BASE + 0x10);
 
 void mbr_bootmain(void)
 {
-	volatile u16 *mbr = (void *) 0x100000;
-	uart_spin_puts("\r\n Hehe \r\n");
-
-	for (int i = 235; i < 235+4; ++i) {
-		puthex((u32) mbr[i]);
-	}
-
-	u32 LBA = (u32) mbr[235] + ((u32) mbr[236] << 16);
-	u32 block_number = (u32) mbr[237] + ((u32) mbr[238] << 16);
-	puthex(LBA);
-	puthex(block_number);
-	while(1);
+	volatile void (*boot)(void) = (void*) (PRELOAD_VECTOR_BASE + 0x10);
+	boot();
 }
 

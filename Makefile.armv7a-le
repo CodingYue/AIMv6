@@ -44,9 +44,10 @@ FIRMWARE_M4	=  firmware/arch/$(ARCH)/firmware.m4 \
 		   firmware/arch/$(ARCH)/$(MACH)/chip.m4 \
 		   firmware/arch/$(ARCH)/$(MACH)/$(BOARD)/board.m4
 
-MBR_OBJS	=  boot/arch/$(ARCH)/$(MACH)/bootmain.o
+MBR_OBJS	=   boot/arch/$(ARCH)/$(MACH)/vector.o \
+				boot/arch/$(ARCH)/$(MACH)/bootmain.o
 
-KERNEL_OBJS = kernel/kernel.c
+KERNEL_OBJS = kernel/kernel.o
 
 all: firmware.bin mbr.bin kernel.elf
 
@@ -66,8 +67,8 @@ $(MBR_OBJS): EXTRA_CFLAGS := -Os
 mbr.elf: $(MBR_OBJS) boot/arch/$(ARCH)/$(MACH)/mbr.ld
 	$(LD) $(LDFLAGS) -T boot/arch/$(ARCH)/$(MACH)/mbr.ld -o $@ $^
 
-kernel.elf: $(KERNEL_OBJS)
-	$(CC) $(CFLAGS) $(EXTRA_CFLAGS) -o $@ $^
+kernel.elf: $(KERNEL_OBJS) kernel/kernel.ld
+	$(LD) $(LDFLAGS) -T kernel/kernel.ld -o $@ $^
 
 clean:
 	rm -f firmware.ld

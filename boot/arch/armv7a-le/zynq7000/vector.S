@@ -14,6 +14,4 @@
 .arm
 
 vector:
-	b	uart_init
-	b	uart_enable
-	b	uart_spin_puts
+	b   mbr_bootmain

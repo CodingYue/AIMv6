@@ -1,10 +1,10 @@
-ENTRY(vector)
+ENTRY(main)
 
 MEMORY
 {
-	MBR (rwx) :
-		ORIGIN = 1M,
-		LENGTH = 446
+	kernel (rwx) :
+		ORIGIN = 20M,
+		LENGTH = 400M
 }
 
 SECTIONS
