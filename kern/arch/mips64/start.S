@@ -11,20 +11,22 @@
 #include <asm/asm.h>
 #include <asm/regdef.h>
 #include <asm/cp0regdef.h>
-
-#define STACKSIZE	0x100000
+#include <smp.h>
 
 LEAF(_start)
 	/* TODO: assembly startup code */
 	mfc0	t0, CP0_STATUS
 	or	t0, ST_KX|ST_CU0|ST_IM
+	or	t0, ST_EXCM
+	xor	t0, ST_EXCM
 	mtc0	t0, CP0_STATUS
 
 	mtc0	zero, CP0_WATCHLO
 	mtc0	zero, CP0_WATCHHI
 
-	li	t0, STACKSIZE
-	daddu	sp, t0
+	LA	sp, cpu_info_stack
+	ADDIU	sp, KSTACKSIZE
+	ADDIU	sp, -32
 
 	j	main
 
