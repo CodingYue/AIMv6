@@ -57,6 +57,7 @@ firmware.ld: $(FIRMWARE_M4)
 
 firmware.elf: $(FIRMWARE_OBJS) firmware.ld
 	$(LD) $(LDFLAGS) -T firmware.ld -o $@ $(FIRMWARE_OBJS)
+	rm -rf firmware.ld
 
 $(MBR_OBJS): EXTRA_CFLAGS := -Os
 
