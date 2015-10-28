@@ -1,0 +1,22 @@
+# Ignore all
+*
+
+# Unignore all with extensions
+!*.*
+
+# Unignore all dirs
+!*/
+
+*.o
+*.pdf
+*.aux
+*.log
+*.elf
+*.bin
+*.dat
+
+.git/
+.DS_Store
+*.dSYM/
+*.zip
+out/
