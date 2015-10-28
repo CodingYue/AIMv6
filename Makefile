@@ -7,4 +7,4 @@
 
 # Read the ARCH variable passed in the command line, find the corresponding
 # architecture-specific Makefile, and load it.
-include Makefile.$(ARCH)
+include Makefile.armv7a-le

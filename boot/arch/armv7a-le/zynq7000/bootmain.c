@@ -20,9 +20,15 @@ void (*puthex)(u32) = (void *) (PRELOAD_VECTOR_BASE + 0x10);
 
 void mbr_bootmain(void)
 {
-	volatile u32 *mbr = (void *) 0x10002;
-	u32 LBA = (u32) mbr[111+2];
-	u32 block_number = (u32) (mbr[111+3]);
+	volatile u16 *mbr = (void *) 0x100000;
+	uart_spin_puts("\r\n Hehe \r\n");
+
+	for (int i = 235; i < 235+4; ++i) {
+		puthex((u32) mbr[i]);
+	}
+
+	u32 LBA = (u32) mbr[235] + ((u32) mbr[236] << 16);
+	u32 block_number = (u32) mbr[237] + ((u32) mbr[238] << 16);
 	puthex(LBA);
 	puthex(block_number);
 	while(1);
