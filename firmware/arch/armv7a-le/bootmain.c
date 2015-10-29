@@ -43,37 +43,30 @@ void memcpy(volatile u8* addr, u32 sz, volatile u8* off)
 int my_dma_read(u32 pa, u32 sz, u32 offset)
 {
 	/*
-	 *	Avoid cross-page interrupt.
+	 *	Avoid memory cross-page interrupt.
 	 *	pa: phisical address
 	 *	sz: the nubmer of bytes
 	 *	offset: sector offset.
 	 *	page size: 4096 bytes
-	 *	sector size: 512 bytes.
-	 *	1 page = 8 sectors
-	*/
+	 */
 	u32 count = (sz >> 9) + ((sz & 0x1FF) != 0);
-	u32 remain = 8-(offset & 0x7);
-
-	uart_spin_puts("COUNT = ");
-	puthex(count);
+	u32 remain = 8-((offset >> 9) & 0x7);
 
 	if (count <= remain) {
 		return sd_dma_spin_read(pa, count, offset);
 	} else {
 		int ret = sd_dma_spin_read(pa, remain, offset);
-		if (ret != 0) {
-			return ret;
-		}
+		if (ret != 0) return ret;
 		pa += remain << 9;
 		count -= remain;
 		offset += remain;
 	}
 	while (count > 0) {
-		int ret = sd_dma_spin_read(pa, 8, offset);
+		int ret = sd_dma_spin_read(pa, count < 8 ? count : 8, offset);
 		if (ret != 0) return ret;
 		count -= 8;
 		offset += 8;
-		pa += 4096; 
+		pa += 4096;
 	}
 	return 0;
 }
