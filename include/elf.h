@@ -432,7 +432,7 @@ typedef struct elf64_phdr {
 
 /* Use these names for portable code */
 
-/*#if defined(ELF32)
+#if defined(ELF32)
 #define Elf_Half	Elf32_Half
 #define Elf_Word	Elf32_Word
 #define Elf_Sword	Elf32_Sword
@@ -468,6 +468,6 @@ typedef struct elf64_phdr {
 #else
 #error "Define either ELF32 or ELF64 first"
 #endif
-*/
+
 #endif
 
