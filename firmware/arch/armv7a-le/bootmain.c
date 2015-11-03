@@ -13,6 +13,7 @@
 #include <drivers/serial/uart.h>
 #include <drivers/sd/sd-zynq7000.h>
 #include <drivers/misc/dtb-zynq7000.h>
+#include <elf32.h>
 
 void puthex(u32 num)
 {
@@ -33,12 +34,6 @@ u32 readbytes(volatile u8 *addr, u32 bytesz)
 	}
 //	puthex(res);
 	return res;
-}
-void memcpy(volatile u8* addr, u32 sz, volatile u8* off)
-{
-	for (u32 i = 0; i < sz; ++i) {
-		addr[i] = off[i];
-	}
 }
 int my_dma_read(u32 pa, u32 sz, u32 offset)
 {
@@ -75,61 +70,28 @@ void mbr_bootmain(void)
 	#define PT_LOAD 1
 	volatile u8 *mbr = (u8 *) 0x100000;
 	u32 LBA = readbytes(mbr+0x1d6, 4);
-
-
 	volatile u8 *pbase = (u8 *) 0x100200;
 
-	//sd_init();
+	sd_dma_spin_read((u32) pbase, 1, LBA);
 
-	/* Initialize SD card */
-	//ret = sd_spin_init_mem_card();
+	volatile elf32hdr_t *elfhdr = (elf32hdr_t*) pbase;
 
-	my_dma_read(0x100200, 1, LBA);
-	u32 e_entry = readbytes(pbase+0x18, 4);
-	u32 e_phoff = readbytes(pbase+0x1C, 4);
-	u32 e_shoff = readbytes(pbase+0x20, 4);
-	u32 e_phentsize = readbytes(pbase+0x2A, 2);
-	u32 e_phnum = readbytes(pbase+0x2C, 2);
-	//u32 e_shentsize = readbytes(pbase+0x2E, 2);
-	//u32 e_shnum = readbytes(pbase+0x30, 2);
+	my_dma_read(0x100400, elfhdr->e_phoff + elfhdr->e_phentsize * elfhdr->e_phnum, LBA);
 
-	volatile u8 *p_shoff = pbase + e_phoff;
+	for (u32 i = 0; i < elfhdr->e_phnum; ++i) {
 
-	puthex(e_entry);
-	puthex((u32) p_shoff);
-	puthex(e_phentsize);
-	puthex(e_phnum);
+		uart_spin_puts("\r\nOK 2!\r\n");
 
-	my_dma_read(0x100200, e_phnum * e_phentsize + e_phoff, LBA);
+		volatile elf32_phdr_t *proghdr = 
+			(elf32_phdr_t*) (0x100400 + elfhdr->e_phoff + i * elfhdr->e_phentsize);
 
-	for (u32 i = 0; i < e_phnum; ++i) {
-
-		u32 p_type = readbytes(p_shoff, 4);
-		//puthex(p_type);
-		u32 p_offset = readbytes(p_shoff+0x4, 4);
-		//puthex(p_offset);
-		//u32 p_vaddr = readbytes(p_shoff+0x8, 4);
-		u32 p_paddr = readbytes(p_shoff+0xC, 4);
-		u32 p_filesz = readbytes(p_shoff+0x10, 4);
-		//u32 p_memsz = readbytes(p_shoff+0x14, 4);
-		//u32 p_flags = readbytes(p_shoff+0x18, 4);
-		//u32 p_align = readbytes(p_shoff+0x1C, 4);
-
-		uart_spin_puts("\r\nBEGIN\r\n");
-
-		puthex(p_type);
-		puthex(p_offset);
-		puthex(p_paddr);
-		puthex(p_filesz);
-
-		if (p_type == PT_LOAD) {
-			my_dma_read(p_paddr, p_filesz, LBA+(p_offset>>9));
+		if (proghdr->p_type == PT_LOAD) {
+			my_dma_read(proghdr->p_paddr, proghdr->p_filesz, LBA+(proghdr->p_offset>>9));
 		}
 
-		p_shoff += e_phentsize;
 	}
 
-	int (*main)(void) = (int*) e_entry;
+	int (*main)(void) = (int*) elfhdr->e_entry;
 	main();
 
 spin:

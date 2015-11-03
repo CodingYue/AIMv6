@@ -431,7 +431,8 @@ typedef struct elf64_phdr {
 #define PF_MASKPROC	0xf0000000	/* Processor-specific */
 
 /* Use these names for portable code */
-#if defined(ELF32)
+
+/*#if defined(ELF32)
 #define Elf_Half	Elf32_Half
 #define Elf_Word	Elf32_Word
 #define Elf_Sword	Elf32_Sword
@@ -447,6 +448,7 @@ typedef struct elf64_phdr {
 #define elf_shdr_t	elf32_shdr_t
 #define elf_phdr	elf32_phdr
 #define elf_phdr_t	elf32_phdr_t
+   
 #elif defined(ELF64)
 #define Elf_Half	Elf64_Half
 #define Elf_Word	Elf64_Word
@@ -466,5 +468,6 @@ typedef struct elf64_phdr {
 #else
 #error "Define either ELF32 or ELF64 first"
 #endif
-
+*/
 #endif
+

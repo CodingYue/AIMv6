@@ -16,7 +16,7 @@
 
 void mbr_bootmain(void)
 {
-	volatile void (*boot)(void) = (void*) (PRELOAD_VECTOR_BASE + 0x10);
+	void (*boot)(void) = (void*) (PRELOAD_VECTOR_BASE + 0x10);
 	boot();
 }
 
