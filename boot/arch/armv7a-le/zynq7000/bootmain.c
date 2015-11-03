@@ -11,8 +11,6 @@
 #include <config.h>
 
 #define PRELOAD_VECTOR_BASE	0x1ff00000
-#define PT_LOAD 1
-
 
 void mbr_bootmain(void)
 {

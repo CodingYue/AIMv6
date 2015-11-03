@@ -8,12 +8,15 @@
  *
  */
 
+#define ELF32
+
 #include <sleep.h>
 #include <asm/io.h>
 #include <drivers/serial/uart.h>
 #include <drivers/sd/sd-zynq7000.h>
 #include <drivers/misc/dtb-zynq7000.h>
-#include <elf32.h>
+#include <elf.h>
+
 
 void puthex(u32 num)
 {
@@ -23,7 +26,6 @@ void puthex(u32 num)
     for (i = 28; i >= 0; i -= 4){
         buf[(28 - i) >> 2] = table[(num >> i) & 0xF];
     }
-    uart_spin_puts(buf);
 }
 u32 readbytes(volatile u8 *addr, u32 bytesz)
 {
@@ -32,7 +34,6 @@ u32 readbytes(volatile u8 *addr, u32 bytesz)
 
 		res += (u32) addr[i] << (i*8);
 	}
-//	puthex(res);
 	return res;
 }
 int my_dma_read(u32 pa, u32 sz, u32 offset)
@@ -45,13 +46,11 @@ int my_dma_read(u32 pa, u32 sz, u32 offset)
 	 *	page size: 4096 bytes
 	 */
 	u32 count = (sz >> 9) + ((sz & 0x1FF) != 0);
-	puthex(count);
 	u32 remain = 8-((pa >> 9) & 0x7);
-	puthex(remain);
+	
 	if (count <= remain) {
 		return sd_dma_spin_read(pa, count, offset);
 	} else {
-		puthex(pa);
 		int ret = sd_dma_spin_read(pa, remain, offset);
 		if (ret != 0) return ret;
 		pa += remain << 9;
@@ -59,7 +58,6 @@ int my_dma_read(u32 pa, u32 sz, u32 offset)
 		offset += remain;
 	}
 	while (count > 0) {
-		puthex(pa);
 		int ret = sd_dma_spin_read(pa, count < 8 ? count : 8, offset);
 		if (ret != 0) return ret;
 		count -= 8;
@@ -70,20 +68,16 @@ int my_dma_read(u32 pa, u32 sz, u32 offset)
 }
 void mbr_bootmain(void)
 {
-	#define PT_LOAD 1
 	volatile u8 *mbr = (u8 *) 0x100000;
 	u32 LBA = readbytes(mbr+0x1d6, 4);
 	volatile u8 *pbase = (u8 *) 0x100200;
-
+	volatile elfhdr_t *elfhdr = (elf32hdr_t*) pbase;
 	sd_dma_spin_read((u32) pbase, 1, LBA);
-
-	volatile elf32hdr_t *elfhdr = (elf32hdr_t*) pbase;
-
 	my_dma_read(0x100400, elfhdr->e_phoff + elfhdr->e_phentsize * elfhdr->e_phnum, LBA);
 
 	for (u32 i = 0; i < elfhdr->e_phnum; ++i) {
 
-		volatile elf32_phdr_t *proghdr = (elf32_phdr_t*) (0x100400 + elfhdr->e_phoff + i * elfhdr->e_phentsize);
+		volatile elf_phdr_t *proghdr = (elf_phdr_t*) (0x100400 + elfhdr->e_phoff + i * elfhdr->e_phentsize);
 		puthex(proghdr->p_filesz);
 		if (proghdr->p_type == PT_LOAD) {
 			my_dma_read(proghdr->p_paddr, proghdr->p_filesz, LBA+(proghdr->p_offset>>9));
