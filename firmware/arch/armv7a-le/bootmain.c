@@ -80,15 +80,11 @@ void mbr_bootmain(void)
 
 	for (u32 i = 0; i < elfhdr->e_phnum; ++i) {
 
-		uart_spin_puts("\r\nOK 2!\r\n");
-
-		volatile elf32_phdr_t *proghdr = 
-			(elf32_phdr_t*) (0x100400 + elfhdr->e_phoff + i * elfhdr->e_phentsize);
+		volatile elf32_phdr_t *proghdr = (elf32_phdr_t*) (0x100400 + elfhdr->e_phoff + i * elfhdr->e_phentsize);
 
 		if (proghdr->p_type == PT_LOAD) {
 			my_dma_read(proghdr->p_paddr, proghdr->p_filesz, LBA+(proghdr->p_offset>>9));
 		}
-
 	}
 
 	int (*main)(void) = (int*) elfhdr->e_entry;
