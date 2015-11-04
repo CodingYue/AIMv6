@@ -36,15 +36,16 @@ u32 readbytes(volatile u8 *addr, u32 bytesz)
 	}
 	return res;
 }
+/*
 int my_dma_read(u32 pa, u32 sz, u32 offset)
 {
-	/*
+	
 	 *	Avoid memory cross-page interrupt.
 	 *	pa: phisical address
 	 *	sz: the nubmer of bytes
 	 *	offset: sector offset.
 	 *	page size: 4096 bytes
-	 */
+	 
 	u32 count = (sz >> 9) + ((sz & 0x1FF) != 0);
 	u32 remain = 8-((pa >> 9) & 0x7);
 	
@@ -65,7 +66,7 @@ int my_dma_read(u32 pa, u32 sz, u32 offset)
 		pa += 4096;
 	}
 	return 0;
-}
+}*/
 void mbr_bootmain(void)
 {
 	volatile u8 *mbr = (u8 *) 0x100000;
@@ -73,14 +74,14 @@ void mbr_bootmain(void)
 	volatile u8 *pbase = (u8 *) 0x100200;
 	volatile elfhdr_t *elfhdr = (elf32hdr_t*) pbase;
 	sd_dma_spin_read((u32) pbase, 1, LBA);
-	my_dma_read(0x100400, elfhdr->e_phoff + elfhdr->e_phentsize * elfhdr->e_phnum, LBA);
+	sd_dma_spin_read(0x100400, elfhdr->e_phoff + elfhdr->e_phentsize * elfhdr->e_phnum, LBA);
 
 	for (u32 i = 0; i < elfhdr->e_phnum; ++i) {
 
 		volatile elf_phdr_t *proghdr = (elf_phdr_t*) (0x100400 + elfhdr->e_phoff + i * elfhdr->e_phentsize);
 		puthex(proghdr->p_filesz);
 		if (proghdr->p_type == PT_LOAD) {
-			my_dma_read(proghdr->p_paddr, proghdr->p_filesz, LBA+(proghdr->p_offset>>9));
+			sd_dma_spin_read(proghdr->p_paddr, proghdr->p_filesz, LBA+(proghdr->p_offset>>9));
 		}
 	}
 
@@ -129,7 +130,7 @@ void firmware_bootmain(void)
 	 */
 
 	/* Read MBR */
-	ret = my_dma_read((u32)mbr, 1, 0);
+	ret = sd_dma_spin_read((u32)mbr, 1, 0);
 	if (ret == 0) uart_spin_puts("FW: Card read OK.\r\n");
 	else {
 		uart_spin_puts("FW: Card read failed.\r\n");
