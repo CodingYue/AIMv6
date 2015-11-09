@@ -278,7 +278,7 @@ int sd_dma_spin_read(u32 pa, u16 count, u32 offset)
 			return -3;
 		}
 		if (state16 & SD_INTR_DMA) {
-			out16(SD_BASE + SD_ERR_INTR_STS_OFFSET, SD_INTR_DMA);
+			out16(SD_BASE + SD_NORM_INTR_STS_OFFSET, SD_INTR_DMA);
 			out32(SD_BASE + SD_SDMA_SYS_ADDR_OFFSET, in32(SD_BASE + SD_SDMA_SYS_ADDR_OFFSET));
 		}
 
@@ -334,7 +334,7 @@ int sd_dma_spin_write(u32 pa, u16 count, u32 offset)
 		}
 		if (state16 & SD_INTR_DMA) {
 			/* clear the interrupt and resume transfer, see sd_dma_spin_read */
-			out16(SD_BASE + SD_ERR_INTR_STS_OFFSET, SD_INTR_DMA);
+			out16(SD_BASE + SD_NORM_INTR_STS_OFFSET, SD_INTR_DMA);
 			out32(SD_BASE + SD_SDMA_SYS_ADDR_OFFSET, in32(SD_BASE + SD_SDMA_SYS_ADDR_OFFSET));
 		}
 	} while (!(state16 & SD_INTR_TC));
