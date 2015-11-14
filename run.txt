@@ -1,0 +1,14 @@
+wait_prompt:
+print "Waiting for zed-boot> prompt..."
+send ""
+expect {
+	"zed-boot>" goto boot
+    "stop autoboot" send ""
+    timeout 1 break
+}
+goto wait_prompt
+
+boot:
+send "mmcinfo"
+send "fatload mmc 0 0x1ff00000 firmware.bin"
+send "go 0x1ff00000"

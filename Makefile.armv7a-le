@@ -50,6 +50,11 @@ MBR_OBJS	=   boot/arch/$(ARCH)/$(MACH)/vector.o \
 KERN_OBJS = kern/kernel.o \
 			kern/mm/mmu.o
 
+DRIVER_OBJS = drivers/serial/uart-zynq7000.o \
+		   drivers/serial/uart.o \
+		   drivers/clock/gtc-a9mpcore.o \
+		   drivers/sd/sd-zynq7000.o
+
 all: firmware.bin mbr.bin kernel.elf
 
 $(FIRMWARE_OBJS): EXTRA_CFLAGS = -O2
@@ -68,9 +73,9 @@ $(MBR_OBJS): EXTRA_CFLAGS := -Os
 mbr.elf: $(MBR_OBJS) boot/arch/$(ARCH)/$(MACH)/mbr.ld
 	$(LD) $(LDFLAGS) -T boot/arch/$(ARCH)/$(MACH)/mbr.ld -o $@ $^
 
-$(KERN_OBJS) : EXTRA_CFLAGS := -Os
+$(KERN_OBJS) : EXTRA_CFLAGS := -ggdb
 
-kernel.elf: $(KERN_OBJS) kern/kernel.ld
+kernel.elf: $(DRIVER_OBJS) $(KERN_OBJS) kern/kernel.ld
 	$(LD) $(LDFLAGS) -T kern/kernel.ld -o $@ $^
 
 clean:

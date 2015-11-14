@@ -26,6 +26,7 @@ void puthex(u32 num)
     for (i = 28; i >= 0; i -= 4){
         buf[(28 - i) >> 2] = table[(num >> i) & 0xF];
     }
+    uart_spin_puts(buf);
 }
 u32 readbytes(volatile u8 *addr, u32 bytesz)
 {
@@ -48,13 +49,15 @@ void mbr_bootmain(void)
 	for (u32 i = 0; i < elfhdr->e_phnum; ++i) {
 
 		volatile elf_phdr_t *proghdr = (elf_phdr_t*) (0x100400 + elfhdr->e_phoff + i * elfhdr->e_phentsize);
-		puthex(proghdr->p_filesz);
+		//puthex(proghdr->p_filesz);
 		if (proghdr->p_type == PT_LOAD) {
 			sd_dma_spin_read(proghdr->p_paddr, proghdr->p_filesz, LBA+(proghdr->p_offset>>9));
 		}
 	}
 
-	uart_spin_puts("Bootload Finished, Good Luck!");
+	uart_spin_puts("Bootload Finished, Good Luck!\r\n");
+
+	uart_disable();
 
 	int (*main)(void) = (int*) elfhdr->e_entry;
 	main();
