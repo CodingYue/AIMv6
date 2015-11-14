@@ -8,11 +8,6 @@
  *
  */
 
-#ifndef ELF32
-#define ELF32
-#endif
-
-
 #ifndef _KERNEL_H
 #define _KERNEL_H
 
@@ -25,12 +20,15 @@
 #include <drivers/serial/uart.h>
 #include <drivers/sd/sd-zynq7000.h>
 #include <drivers/misc/dtb-zynq7000.h>
-#include <elf.h>
- 
+
+/* Kernel configure */
 #define KERN_BASE 0x80000000
+#define KERN_ADDR 0x1400000
+
+/* TTB configuare */
 #define PAGE_SIZE 4096
 #define SECTION_SIZE 0x100000
-#define FIRMWARE_ADDR 0x1ff00000
-#define KERN_ADDR 0x1400000
+#define MTB_ADDR 0x2000000
+#define MTB_FLAG 0x5E2
 
 #endif

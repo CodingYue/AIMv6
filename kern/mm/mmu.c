@@ -11,10 +11,6 @@
 #include <kernel.h>
 #include <mmu.h>
 
-
-#define MTB_ADDR 0x2000000
-#define MTB_FLAG 0x5E2
-
 void mmu_mmap(u32 va, u32 pa, u32 table_addr) 
 {
 	table_addr += (va >> 20) << 2; 
@@ -38,24 +34,26 @@ void enable_mmu(void)
 		Mapping device that needed to use	
 	*/
 
-	u32 table_addr = 0x2000000;
-	*(u32*) table_addr = 0x155E6;
-	 asm volatile(
+	/* set TTB address as MTB_ADDR */
+	
+	asm volatile(
 	 	"ldr r0, = 0x2000000\n\t"
-        "mcr p15,0,r0,c2,c0,0\n\t" //set the TTB
+        "mcr p15,0,r0,c2,c0,0\n\t" 
     );
 	uart_spin_puts("set TTB OK!\r\n");
 
+	/* set DOMAIN */
     asm volatile(
         "ldr r0, =0x55555555\n\t"
-        "mcr p15,0,r0,c3,c0,0\n\t" //set the DOMAIN
+        "mcr p15,0,r0,c3,c0,0\n\t"
     );
 
+    /* enable MMU */
     uart_spin_puts("set DOMAIN OK\r\n");
     asm volatile(
         "mrc p15,0,r0,c1,c0,0\n\t"
         "orr r0,r0,#0x1\n\t"
-        "mcr p15,0,r0,c1,c0,0\n\t" //enable MMU
+        "mcr p15,0,r0,c1,c0,0\n\t" 
     );
 
     uart_spin_puts("\r\nMMU enabled\r\n");
