@@ -9,8 +9,7 @@
  */
 
 #include <kernel.h>
-#include <mmu.h>
-
+//void(*puts)(char *) = (void *) 0x1ff0000C;
 void mmu_mmap(u32 va, u32 pa, u32 table_addr) 
 {
 	table_addr += (va >> 20) << 2; 
@@ -19,28 +18,45 @@ void mmu_mmap(u32 va, u32 pa, u32 table_addr)
 
 void enable_mmu(void) 
 {
-
-	uart_spin_puts("\r\nEnable MMU\r\n");
-	uart_spin_puts("Good Luck!\r\n");
+	void(*puts)(char *) = (void *) 0x1ff0000C;
+	puts("\r\nEnable MMU\r\n");
+	puts("Good Luck!\r\n");
 
 	for (u32 count = 0, va = 0; count < 4096; ++count, va += SECTION_SIZE) {
 		mmu_mmap(va, va, MTB_ADDR);
 	}
 	/* Mapping KERN above KERN_BASE */
-	mmu_mmap(KERN_BASE + KERN_ADDR, KERN_ADDR, MTB_ADDR);
-	uart_spin_puts("Mapping OK!\r\n");
+	for (u32 count = 0; count < 8; ++count) {
+		mmu_mmap(KERN_BASE + KERN_ADDR + count * SECTION_SIZE, KERN_ADDR + count * SECTION_SIZE, MTB_ADDR);
+	}
+	for (u32 count = 16; count >= 1; --count) {
+		mmu_mmap(DEVICE_BASE - count * SECTION_SIZE, RAM_SIZE-count*SECTION_SIZE, MTB_ADDR);
+	}
+	puts("Mapping OK!\r\n");
 	/*
 		TO DO
 		Mapping device that needed to use	
 	*/
 
+	asm volatile (
+    "mov     r1, #0\n"
+    "mcr     p15, 0, r1, c8, c7, 0\n"   /* Invalidate entire unified TLB */
+    "mcr     p15, 0, r1, c8, c6, 0\n"   /* Invalidate entire data TLB */
+    "mcr     p15, 0, r1, c8, c5, 0\n"   /* Invalidate entire instruction TLB */
+    "mcr     p15, 0, r1, c7, c5, 6\n"   /* Invalidate entire branch prediction array */
+    );
+
+
 	/* set TTB address as MTB_ADDR */
 	
 	asm volatile(
-	 	"ldr r0, = 0x2000000\n\t"
+	 	"mov r0, %0\n\t"
         "mcr p15,0,r0,c2,c0,0\n\t" 
+        :
+        :"r"(MTB_ADDR)
+        :"r0"
     );
-	uart_spin_puts("set TTB OK!\r\n");
+	puts("set TTB OK!\r\n");
 
 	/* set DOMAIN */
     asm volatile(
@@ -49,13 +65,16 @@ void enable_mmu(void)
     );
 
     /* enable MMU */
-    uart_spin_puts("set DOMAIN OK\r\n");
+    puts("set DOMAIN OK\r\n");
     asm volatile(
         "mrc p15,0,r0,c1,c0,0\n\t"
         "orr r0,r0,#0x1\n\t"
         "mcr p15,0,r0,c1,c0,0\n\t" 
     );
 
-    uart_spin_puts("\r\nMMU enabled\r\n");
+    puts("MMU enabled\r\n");
 
 }
+
+
+	
