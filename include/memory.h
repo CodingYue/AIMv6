@@ -12,10 +12,10 @@ typedef struct page_block {
 } page_block_t;
 page_block_t *free_list;
 
-#define MEMORY_BLOCK_POOL_BASE 0x7ec00000
+#define MEMORY_BLOCK_POOL_BASE 0x7f000000
 
 void memory_init();
 u8* kalloc(u32);
-int kfree(u8*, u32);
+void kfree(u8*, u32);
 
 #endif

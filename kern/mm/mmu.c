@@ -28,7 +28,7 @@ void enable_mmu(void)
 		mmu_mmap(va, va);
 	}
 	/* Mapping KERN above KERN_BASE */
-	for (u32 count = 0; count < 8; ++count) {
+	for (u32 count = 0; count < 10; ++count) {
 		mmu_mmap(KERN_BASE + KERN_ADDR + count * SECTION_SIZE, KERN_ADDR + count * SECTION_SIZE);
 	}
 	/* Mapping MTB above KERN_BASE */

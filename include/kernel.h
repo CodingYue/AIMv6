@@ -23,6 +23,15 @@ void low_exec();
 void high_exec();
 void puthex(u32);
 #define NULL (void*) 0x0
+/*
+ *	Virtual Memory Layout (KERN_BASE, buttom to up)
+ *	2MB NO USE
+ *	4MB MTB
+ *	10MB KERNEL
+ *	1536MB FREE MEMORY
+ *	480MB MAPPING PHYSICAL ADDRESS
+ *	16MB KERN_STACK
+ */
 
 /*		
  *	Physical Memeory Layout (buttom to up)
@@ -30,20 +39,10 @@ void puthex(u32);
  *	1MB MBR AND OTHERS
  *	4MB MTB
  *	10MB KERNEL
- *	476MB FREE MEMORY
- *	4MB PAGE MANAGEMENT
+ *	480MB FREE MEMORY
  *	16MB KERN_STACK
  */
 
-/*
- *	Virtual Memory Layout (KERN_BASE, buttom to up)
- *	2MB NO USE
- *	4MB MTB
- *	10MB KERNEL
- *	2012MB FREE MEMORY
- *	4MB PAGE MANAGEMENT
- *	16MB KERN_STACK
- */
 
 /* Kernel configure */
 #define KERN_BASE 0x80000000
