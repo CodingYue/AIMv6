@@ -19,7 +19,7 @@ int main(void)
 	low_exec();
 
 	/*	Jump above KERN_BASE 
-	 *	After jump above KERN_BASE, firmware will be abandoned.
+	 *	Once jump above KERN_BASE, firmware will be abandoned.
 	 *	Kernel stack physical adrress [512-16, 512] MB.
 	 */
 

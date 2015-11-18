@@ -8,11 +8,13 @@
  *
  */
 
+
+
 #include <kernel.h>
 //void(*puts)(char *) = (void *) 0x1ff0000C;
-void mmu_mmap(u32 va, u32 pa, u32 table_addr) 
+void mmu_mmap(u32 va, u32 pa) 
 {
-	table_addr += (va >> 20) << 2; 
+	u32 table_addr = MTB_ADDR + ((va >> 20) << 2);
 	*(u32 *) table_addr = ((pa >> 20) << 20) + MTB_FLAG;
 }
 
@@ -23,27 +25,34 @@ void enable_mmu(void)
 	puts("Good Luck!\r\n");
 
 	for (u32 count = 0, va = 0; count < 4096; ++count, va += SECTION_SIZE) {
-		mmu_mmap(va, va, MTB_ADDR);
+		mmu_mmap(va, va);
 	}
 	/* Mapping KERN above KERN_BASE */
 	for (u32 count = 0; count < 8; ++count) {
-		mmu_mmap(KERN_BASE + KERN_ADDR + count * SECTION_SIZE, KERN_ADDR + count * SECTION_SIZE, MTB_ADDR);
+		mmu_mmap(KERN_BASE + KERN_ADDR + count * SECTION_SIZE, KERN_ADDR + count * SECTION_SIZE);
 	}
-	for (u32 count = 16; count >= 1; --count) {
-		mmu_mmap(DEVICE_BASE - count * SECTION_SIZE, RAM_SIZE-count*SECTION_SIZE, MTB_ADDR);
+	/* Mapping MTB above KERN_BASE */
+	for (u32 count = 0; count < 4; ++count) {
+		mmu_mmap(KERN_BASE + MTB_ADDR + count * SECTION_SIZE, MTB_ADDR + count * SECTION_SIZE);
 	}
+
+	/* Mapping kernel stack */
+	for (u32 count = 1; count <= 16; ++count) {
+		mmu_mmap(DEVICE_BASE - count * SECTION_SIZE, RAM_SIZE-count*SECTION_SIZE);
+	}
+
 	puts("Mapping OK!\r\n");
 	/*
-		TO DO
-		Mapping device that needed to use	
+	 *	TO DO
+	 *	Mapping device that needed to use	
 	*/
 
 	asm volatile (
     "mov     r1, #0\n"
-    "mcr     p15, 0, r1, c8, c7, 0\n"   /* Invalidate entire unified TLB */
-    "mcr     p15, 0, r1, c8, c6, 0\n"   /* Invalidate entire data TLB */
-    "mcr     p15, 0, r1, c8, c5, 0\n"   /* Invalidate entire instruction TLB */
-    "mcr     p15, 0, r1, c7, c5, 6\n"   /* Invalidate entire branch prediction array */
+    "mcr     p15, 0, r1, c8, c7, 0\n\t"   /* Invalidate entire unified TLB */
+    "mcr     p15, 0, r1, c8, c6, 0\n\t"   /* Invalidate entire data TLB */
+    "mcr     p15, 0, r1, c8, c5, 0\n\t"   /* Invalidate entire instruction TLB */
+    "mcr     p15, 0, r1, c7, c5, 6\n\t"   /* Invalidate entire branch prediction array */
     );
 
 
@@ -74,6 +83,7 @@ void enable_mmu(void)
 
     puts("MMU enabled\r\n");
 
+    /* Clear lower memory mapping. */
 }
 
 

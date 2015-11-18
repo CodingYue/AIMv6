@@ -17,57 +17,6 @@
 #include <drivers/misc/dtb-zynq7000.h>
 #include <elf.h>
 
-
-void puthex(u32 num)
-{
-    int i;
-    const char table[] = "0123456789ABCDEF";
-    char buf[11] = "00000000\r\n";
-    for (i = 28; i >= 0; i -= 4){
-        buf[(28 - i) >> 2] = table[(num >> i) & 0xF];
-    }
-    uart_spin_puts(buf);
-}
-u32 readbytes(volatile u8 *addr, u32 bytesz)
-{
-	u32 res = 0;
-	for (u32 i = 0; i < bytesz; ++i) {
-
-		res += (u32) addr[i] << (i*8);
-	}
-	return res;
-}
-#define size2count(x) (((x)>>9) + (((x) & 0x1ff) > 0))
-void mbr_bootmain(void)
-{
-	uart_spin_puts("\r\nBootload begins!!!\r\n");
-	volatile u8 *mbr = (u8 *) 0x100000;
-	u32 LBA = readbytes(mbr+0x1d6, 4);
-	volatile u8 *pbase = (u8 *) 0x100200;
-	volatile elfhdr_t *elfhdr = (elf32hdr_t*) pbase;
-	sd_dma_spin_read((u32) pbase, 1, LBA);
-	puthex(size2count(elfhdr->e_phoff + elfhdr->e_phentsize * elfhdr->e_phnum));
-	sd_dma_spin_read(0x100400, size2count(elfhdr->e_phoff + elfhdr->e_phentsize * elfhdr->e_phnum), LBA);
-
-	for (u32 i = 0; i < elfhdr->e_phnum; ++i) {
-
-		volatile elf_phdr_t *proghdr = (elf_phdr_t*) (0x100400 + elfhdr->e_phoff + i * elfhdr->e_phentsize);
-		if (proghdr->p_type == PT_LOAD) {
-			puthex(size2count(proghdr->p_filesz));
-			sd_dma_spin_read(proghdr->p_paddr, size2count(proghdr->p_filesz), LBA+(proghdr->p_offset>>9));
-		}
-	}
-
-	uart_spin_puts("Bootload Finished, Good Luck!\r\n");
-	
-	int (*main)(void) = (int*) elfhdr->e_entry;
-	main();
-
-spin:
-	while (1);
-}
-
-
 void firmware_bootmain(void)
 {
 	int ret;

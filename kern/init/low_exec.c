@@ -8,7 +8,8 @@
  *
  */
 
-#include <kernel.h>
+
+#include <mmu.h>
 void low_exec()
 {
 	//uart_spin_puts("\r\nWelcome to kernel!\r\n");

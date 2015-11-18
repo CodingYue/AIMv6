@@ -50,11 +50,20 @@ DRIVER_OBJS = drivers/serial/uart-zynq7000.o \
 		   drivers/clock/gtc-a9mpcore.o \
 		   drivers/sd/sd-zynq7000.o
 
-KERN_OBJS = kern/kernel.o \
-			kern/mm/mmu.o \
+#HIGH_EXEC_OBJS = kern/init/high_exec.o \
+#			kern/mm/memory.o \
+#			$(DRIVER_OBJS)
+
+#LOW_EXEC_OBJS = kern/mm/mmu.o \
+#				kern/init/low_exec.o
+			
+KERN_OBJS = kern/init/high_exec.o \
+			$(DRIVER_OBJS) \
+			kern/mm/memory.o \
+			kern/kernel.o \
 			kern/init/low_exec.o \
-			kern/init/high_exec.o \
-			$(DRIVER_OBJS)
+			kern/mm/mmu.o
+			
 
 all: firmware.bin mbr.bin kernel.elf
 
@@ -77,7 +86,13 @@ mbr.elf: $(MBR_OBJS) boot/arch/$(ARCH)/$(MACH)/mbr.ld
 $(KERN_OBJS) : EXTRA_CFLAGS := -ggdb
 
 kernel.elf: $(KERN_OBJS) kern/kernel.ld
-	$(LD) $(LDFLAGS) -T kern/kernel.ld -o $@ $^
+	$(LD) $(LDFLAGS) -T kern/kernel.ld -o $@ $(KERN_OBJS)
+
+#low_exec.elf: $(LOW_EXEC_OBJS) kern/init/ldscript.ld
+#	$(LD) $(LDFLAGS) -T kern/init/ldscript.ld -o $@ $^
+
+#high_exec.elf: $(HIGH_EXEC_OBJS) kern/init/ldscript.ld
+#	$(LD) $(LDFLAGS) -T kern/init/ldscript.ld -o $@ $^
 
 clean:
 	rm -f firmware.ld
