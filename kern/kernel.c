@@ -17,6 +17,8 @@ int main(void)
 {
 //	uart_enable();
 	low_exec();
+	void(*puts)(char *) = (void *) 0x1ff0000C;
+	puts("low_exec finished!\r\n");
 
 	/*	Jump above KERN_BASE 
 	 *	Once jump above KERN_BASE, firmware will be abandoned.

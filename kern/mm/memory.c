@@ -17,55 +17,46 @@
  */
 
 page_block_t *free_list;
-void mmap(u32 va, u32 pa)
+void section_map(u32 va, u32 pa)
 {
 	u32 table_addr = KERN_BASE + MTB_ADDR;
 	table_addr += (va >> 20) << 2; 
-	if (pa == -1) {
-		*(u32 *) table_addr = NULL;
-	} else {
-		*(u32 *) table_addr = ((pa >> 20) << 20) + MTB_FLAG;
-	}
+	*(u32 *) table_addr = ((pa >> 20) << 20) + MTB_FLAG;
 }
-/*
-bool is_mapped(u32 va)
+void section_unmap(u32 va)
 {
 	u32 table_addr = KERN_BASE + MTB_ADDR;
-	table_addr += (va >> 20) << 2; 
-	return *(u32 *) table_addr != NULL;
+	table_addr += (va >> 20) << 2;
+	*(u32 *) table_addr = NULL;
 }
-*/
 
-/*
-void free_block(u32 va)
-{
-	mamp(va, -1);
-}
-u32 new_block()
-{
-	for (u32 block_idx = 1, va = MEMORY_BLOCK_POOL_BASE; block_idx <= 512; ++block_idx, va -= SECTION_SIZE)
-	{
-		if (!is_mapped(va)) return va;
-	}
-	return -1;
-}
-*/
+
+
 void memory_init()
 {
-	/* Clear lower memory mapping */
 	
-	for (u32 count = 1; count < 2048; ++count) {
-		mmap(count * SECTION_SIZE, -1);
-	}
+	uart_spin_puts("Memroy init begin \r\n");
 
+	/* Clear lower memory mapping */
+	for (u32 va = 0; va < KERN_BASE; va += SECTION_SIZE) {
+		section_unmap(va);
+	}
+	/* Mapping to access physical memory */
 	for (u32 pa = 0x1000000, va = 0x61000000, count = 0; count < 480; ++count, pa += SECTION_SIZE, va += SECTION_SIZE) {
-		mmap(va, pa);
+		section_map(va, pa);
 	}
+	/* Invalidate entire unified TLB */
 
+
+
+	/* First page block */
 	free_list = (page_block_t *) 0x61000000;
 	free_list->size = (480-16)<<20;
 	free_list->next = NULL;
 	free_list->pa = 16<<20;
+
+	uart_spin_puts("Memroy init finished\r\n");
+
 }
 
 u8 *kalloc(u32 count)
@@ -110,7 +101,7 @@ void merge_block(page_block_t* l, page_block_t* r)
 	}
 }
 
-void kfree(u8* pa, u32 count)
+void kfree(u32 pa, u32 count)
 {
 	u32 free_size = count * PAGE_SIZE;
 
@@ -139,11 +130,6 @@ void kfree(u8* pa, u32 count)
 		}
 	}
 }
-
-
-
-
-
 
 
 
