@@ -15,7 +15,7 @@ void puthex(u32 num)
 {
     int i;
     const char table[] = "0123456789ABCDEF";
-    char buf[11] = "00000000\r\n";
+    char buf[10] = "00000000";
     for (i = 28; i >= 0; i -= 4){
         buf[(28 - i) >> 2] = table[(num >> i) & 0xF];
     }
@@ -36,22 +36,23 @@ void high_exec()
     uart_spin_puts("TEST BEGIN\r\n");
     put_str_hex("free_list->size : ", free_list->size);
 
-    page_block_t* a = kalloc(12);
+    page_block_t* a = alloc_pages(12);
     put_str_hex("a->pa : ", a->pa);
     put_str_hex("free_list->pa : ", free_list->pa);
 
-    page_block_t* b = kalloc(12);
+    page_block_t* b = alloc_pages(12);
     put_str_hex("b->pa : ", b->pa);
     put_str_hex("free_list->pa : ", free_list->pa);
 
-    kfree(a->pa, 16);
+    free_pages(a->pa, 16);
     put_str_hex("freelist->pa : ", free_list->pa);
     put_str_hex("freelist->size : ", free_list->size);
 
-    kfree(a->pa+(16*PAGE_SIZE), 8);
+    free_pages(a->pa+(16*PAGE_SIZE), 8);
     put_str_hex("freelist->pa : ", free_list->pa);
     put_str_hex("freelist->size : ", free_list->size);
     
 	uart_spin_puts("FINISHED!\r\n");
+
 	while(1);
 }

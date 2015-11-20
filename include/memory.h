@@ -13,15 +13,18 @@ typedef struct page_block {
 page_block_t *free_list;
 
 #define MEMORY_BLOCK_POOL_BASE 0x7f000000
-
 void memory_init();
 
 /*
  *	First fit algorithm.
- *	kalloc : number of page.
- *	kfree : physical address, nubmer of page.
+ *	alloc_pages will return #count pages' physical address.
+ *	free_pages will free #count pages from pa(physical adress).
  */
-u8* kalloc(u32);
-void kfree(u32 pa, u32 count);
+page_block_t* alloc_pages(u32 count);
+void free_pages(u32 pa, u32 count);
+void page_map(u32 pa, u32 va, u32 mtb_va);
+
+/* return 1KB align physical address */
+u32 alloc_align();
 
 #endif

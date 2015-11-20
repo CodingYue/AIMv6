@@ -16,50 +16,72 @@
  *	Memory Management.
  */
 
-page_block_t *free_list;
-void section_map(u32 va, u32 pa)
+page_block_t *page_bound_0x200 = NULL;
+page_block_t *page_bound_0x400 = NULL;
+
+u32 alloc_align(u32 boundary)
 {
-	u32 table_addr = KERN_BASE + MTB_ADDR;
-	table_addr += (va >> 20) << 2; 
-	*(u32 *) table_addr = ((pa >> 20) << 20) + MTB_FLAG;
+	if (boundary == 0x200) {
+		if (page_bound_0x200 == NULL || page_bound_0x400->size == 0) {
+			page_bound_0x200 = alloc_pages(1);
+		}
+		page_bound_0x200->size -= 0x200;
+		return page_bound_0x200->pa + page_bound_0x200->size;
+	}
+	if (boundary == 0x400) {
+		if (page_bound_0x400 == NULL || page_bound_0x400->size == 0) {
+			page_bound_0x400 = alloc_pages(1);
+		}
+		page_bound_0x400->size -= 0x400;
+		return page_bound_0x400->pa + page_bound_0x400->size;
+	}
+	if (boundary == 0x4000) {
+		return alloc_pages(4)->pa;
+	}
+	return NULL;
 }
-void section_unmap(u32 va)
+void page_map(u32 va, u32 pa, u32 mtb_va)
 {
-	u32 table_addr = KERN_BASE + MTB_ADDR;
-	table_addr += (va >> 20) << 2;
-	*(u32 *) table_addr = NULL;
+	u32* mtb_pte = (u32 *) mtb_va;
+	mtb_pte += (va >> 20);
+
+	if ((*mtb_pte & 0x3) == 0) {
+		*mtb_pte = alloc_align(1);
+	}
 }
-
-
-
 void memory_init()
 {
 	
 	uart_spin_puts("Memroy init begin \r\n");
 
-	/* Clear lower memory mapping */
-	for (u32 va = 0; va < KERN_BASE; va += SECTION_SIZE) {
-		section_unmap(va);
-	}
-	/* Mapping to access physical memory */
-	for (u32 pa = 0x1000000, va = 0x61000000, count = 0; count < 480; ++count, pa += SECTION_SIZE, va += SECTION_SIZE) {
-		section_map(va, pa);
-	}
-	/* Invalidate entire unified TLB */
+	for (u32 va = 0x100000; va < KERN_BASE; va += SECTION_SIZE) {
 
+		u32* mtb_pte = (u32*) KERN_MTB_VA;
+		mtb_pte += (va >> 20);
+		*mtb_pte = (*mtb_pte >> 2) << 2;
+	}
+	uart_spin_puts("\r\nunmap OK\r\n");
+
+	asm volatile (
+		"mov     r1, #0\n\t"
+		"mcr     p15, 0, r1, c7, c5, 6\n\t"   /* Invalidate entire branch prediction array */
+		"mcr     p15, 0, r1, c7, c5, 0\n\t"	  /* Invalidate I-cache */
+		"mcr     p15, 0, r11, c7, c14, 2\n\t" /* Invalidate D-cache */
+    );
 
 
 	/* First page block */
-	free_list = (page_block_t *) 0x61000000;
+	free_list = (page_block_t *) ACCESS_MEMORY_BASE;
 	free_list->size = (480-16)<<20;
 	free_list->next = NULL;
 	free_list->pa = 16<<20;
 
+	
 	uart_spin_puts("Memroy init finished\r\n");
 
 }
 
-u8 *kalloc(u32 count)
+page_block_t *alloc_pages(u32 count)
 {
 	if (count == 0) return NULL;
 	u32 allloc_size = count * PAGE_SIZE;
@@ -74,7 +96,7 @@ u8 *kalloc(u32 count)
 			} else {
 				pre->next = block->next;
 			}
-			return (u8*) block;
+			return block;
 		}
 		if (block->size > allloc_size) {
 			page_block_t *r = (page_block_t*) (u32) block + allloc_size;
@@ -86,7 +108,7 @@ u8 *kalloc(u32 count)
 			} else {
 				pre->next = r;
 			}
-			return (u8*) block;
+			return block;
 		}
 	}
 	return NULL;
@@ -101,7 +123,7 @@ void merge_block(page_block_t* l, page_block_t* r)
 	}
 }
 
-void kfree(u32 pa, u32 count)
+void free_pages(u32 pa, u32 count)
 {
 	u32 free_size = count * PAGE_SIZE;
 

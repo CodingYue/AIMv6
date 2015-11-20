@@ -15,9 +15,10 @@ SECTIONS
 	.high 0x80700000: AT(0x700000) {
 		*high_exec.o
 		*memory.o
-		*uar.o
+		*uart.o
 		*gtc-a9mpcore.o
 		*sd-zynq7000.o
+		*uart-zynq7000.o
 	}
 	.low : {
 		*low_exec.elf

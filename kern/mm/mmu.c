@@ -14,8 +14,8 @@
 //void(*puts)(char *) = (void *) 0x1ff0000C;
 void mmu_section_map(u32 va, u32 pa) 
 {
-	u32 table_addr = MTB_ADDR + ((va >> 20) << 2);
-	*(u32 *) table_addr = ((pa >> 20) << 20) + MTB_FLAG;
+	u32 table_addr = KERN_MTB_PA + ((va >> 20) << 2);
+	*(u32 *) table_addr = ((pa >> 20) << 20) + 0x5E2;
 }
 
 void enable_mmu(void) 
@@ -33,12 +33,17 @@ void enable_mmu(void)
 	}
 	/* Mapping MTB above KERN_BASE */
 	for (u32 count = 0; count < 4; ++count) {
-		mmu_section_map(KERN_BASE + MTB_ADDR + count * SECTION_SIZE, MTB_ADDR + count * SECTION_SIZE);
+		mmu_section_map(KERN_MTB_VA + count * SECTION_SIZE, KERN_MTB_PA + count * SECTION_SIZE);
 	}
 
 	/* Mapping kernel stack */
 	for (u32 count = 1; count <= 16; ++count) {
 		mmu_section_map(DEVICE_BASE - count * SECTION_SIZE, RAM_SIZE-count*SECTION_SIZE);
+	}
+
+	/* Mapping to access physical memory */
+	for (u32 pa = 0x1000000, va = ACCESS_MEMORY_BASE, count = 0; count < 480; ++count, pa += SECTION_SIZE, va += SECTION_SIZE) {
+		mmu_section_map(va, pa);
 	}
 
 	puts("Mapping OK!\r\n");
@@ -47,24 +52,14 @@ void enable_mmu(void)
 	 *	Mapping device that needed to use	
 	*/
 
-	asm volatile (
-		"mov     r1, #0\n\t"
-		"mcr     p15, 0, r1, c8, c7, 0\n\t"   /* Invalidate entire unified TLB */
 
-    	"mcr     p15, 0, r1, c8, c6, 0\n\t"   /* Invalidate entire data TLB */
-    	"mcr     p15, 0, r1, c8, c5, 0\n\t"   /* Invalidate entire instruction TLB */
-		"mcr     p15, 0, r1, c7, c5, 6\n\t"   /* Invalidate entire branch prediction array */
-		"mcr     p15, 0, r1, c7, c5, 0\n\t"	  /* Invalidate I-cache */
-		"mcr     p15, 0, r11, c7, c14, 2\n\t" /* Invalidate D-cache */
-    );
-
-	/* set TTB address as MTB_ADDR */
+	/* set TTB address as KERN_MTB_PA */
 	
 	asm volatile(
 	 	"mov r0, %0\n\t"
         "mcr p15,0,r0,c2,c0,0\n\t" 
         :
-        :"r"(MTB_ADDR)
+        :"r"(KERN_MTB_PA)
         :"r0"
     );
 	puts("set TTB OK!\r\n");
@@ -86,6 +81,16 @@ void enable_mmu(void)
         "dsb\n\t"
     );
 
+	asm volatile (
+		"mov     r1, #0\n\t"
+		"mcr     p15, 0, r1, c8, c7, 0\n\t"   /* Invalidate entire unified TLB */
+
+    	"mcr     p15, 0, r1, c8, c6, 0\n\t"   /* Invalidate entire data TLB */
+    	"mcr     p15, 0, r1, c8, c5, 0\n\t"   /* Invalidate entire instruction TLB */
+		"mcr     p15, 0, r1, c7, c5, 6\n\t"   /* Invalidate entire branch prediction array */
+		"mcr     p15, 0, r1, c7, c5, 0\n\t"	  /* Invalidate I-cache */
+		"mcr     p15, 0, r11, c7, c14, 2\n\t" /* Invalidate D-cache */
+    );
 
     asm volatile (
 		"mrc     p15, 0, r0, c1, c0, 0\n\t"
@@ -97,6 +102,8 @@ void enable_mmu(void)
     );
 
     puts("MMU enabled\r\n");
+
+
 
 }
 

@@ -15,13 +15,12 @@
 #include <drivers/serial/uart.h>
 #include <drivers/sd/sd-zynq7000.h>
 #include <drivers/misc/dtb-zynq7000.h>
-#include <mmu.h>
 #include <sleep.h>
 #include <asm/io.h>
 
 void low_exec();
-void high_exec();
 void puthex(u32);
+void high_exec();
 #define NULL (void*) 0x0
 /*
  *	Virtual Memory Layout (KERN_BASE, buttom to up)
@@ -52,9 +51,9 @@ void puthex(u32);
 #define SECTION_SIZE 0x100000
 #define RAM_SIZE 0x20000000
 
-#define MTB_ADDR 0x200000
-#define MTB_FLAG 0x5E2
-
+#define KERN_MTB_PA 0x200000
+#define KERN_MTB_VA 0x80200000
 #define DEVICE_BASE 0xE0000000
+#define ACCESS_MEMORY_BASE 0xe1000000
 
 #endif
