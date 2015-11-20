@@ -54,20 +54,27 @@ void memory_init()
 	
 	uart_spin_puts("Memroy init begin \r\n");
 
+	/* Clear lower memory address */
 	for (u32 va = 0x100000; va < KERN_BASE; va += SECTION_SIZE) {
 
 		u32* mtb_pte = (u32*) KERN_MTB_VA;
 		mtb_pte += (va >> 20);
 		*mtb_pte = (*mtb_pte >> 2) << 2;
 	}
-	uart_spin_puts("\r\nunmap OK\r\n");
+	uart_spin_puts("Clear lower memory address OK\r\n");
 
+	/* Invalidate TLB and cache */
 	asm volatile (
 		"mov     r1, #0\n\t"
+		"mcr     p15, 0, r1, c8, c7, 0\n\t"   /* Invalidate entire unified TLB */
+    	"mcr     p15, 0, r1, c8, c6, 0\n\t"   /* Invalidate entire data TLB */
+    	"mcr     p15, 0, r1, c8, c5, 0\n\t"   /* Invalidate entire instruction TLB */
 		"mcr     p15, 0, r1, c7, c5, 6\n\t"   /* Invalidate entire branch prediction array */
 		"mcr     p15, 0, r1, c7, c5, 0\n\t"	  /* Invalidate I-cache */
 		"mcr     p15, 0, r11, c7, c14, 2\n\t" /* Invalidate D-cache */
     );
+
+    uart_spin_puts("Invalidated TLB.\r\n");
 
 
 	/* First page block */
@@ -77,7 +84,7 @@ void memory_init()
 	free_list->pa = 16<<20;
 
 	
-	uart_spin_puts("Memroy init finished\r\n");
+	uart_spin_puts("Memroy init finished\r\n\r\n");
 
 }
 

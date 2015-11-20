@@ -101,7 +101,7 @@ void enable_mmu(void)
         "isb\n\t"
     );
 
-    puts("MMU enabled\r\n");
+    puts("MMU enabled\r\n\r\n");
 
 
 
