@@ -51,7 +51,13 @@ void high_exec()
     free_pages(a->pa+(16*PAGE_SIZE), 8);
     put_str_hex("freelist->pa : ", free_list->pa);
     put_str_hex("freelist->size : ", free_list->size);
+
+    alloc_pages(2);
     
+    put_str_hex("alloc_align pa : ", alloc_align(0x4000));
+    put_str_hex("freelist->pa : ", free_list->pa);
+    put_str_hex("freelist->size : ", free_list->size);
+
 	uart_spin_puts("FINISHED!\r\n");
 
 	while(1);

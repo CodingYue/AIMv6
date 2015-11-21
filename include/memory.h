@@ -24,7 +24,7 @@ page_block_t* alloc_pages(u32 count);
 void free_pages(u32 pa, u32 count);
 void page_map(u32 pa, u32 va, u32 mtb_va);
 
-/* return 1KB align physical address */
-u32 alloc_align();
+/* return boundary align physical address */
+u32 alloc_align(u32 boundary);
 
 #endif

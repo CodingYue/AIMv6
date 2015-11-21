@@ -36,7 +36,14 @@ u32 alloc_align(u32 boundary)
 		return page_bound_0x400->pa + page_bound_0x400->size;
 	}
 	if (boundary == 0x4000) {
-		return alloc_pages(4)->pa;
+		page_block_t *block = alloc_pages(7);
+		u32 pa;
+		for (pa = block->pa; (pa & 0x3fff) != 0; pa += 0x1000);
+		if (block->pa != pa) {
+			free_pages(block->pa, (pa-block->pa) >> 12);
+		}
+		free_pages(pa+0x4000, (block->pa+block->size-pa-0x4000)>>12);
+		return pa;
 	}
 	return NULL;
 }
@@ -132,6 +139,7 @@ void merge_block(page_block_t* l, page_block_t* r)
 
 void free_pages(u32 pa, u32 count)
 {
+	if (count == 0) return;
 	u32 free_size = count * PAGE_SIZE;
 
 	if (pa < free_list->pa) {
