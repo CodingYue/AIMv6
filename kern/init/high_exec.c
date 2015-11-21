@@ -54,7 +54,7 @@ void high_exec()
 
     alloc_pages(2);
     
-    put_str_hex("alloc_align pa : ", alloc_align(0x4000));
+    
     put_str_hex("freelist->pa : ", free_list->pa);
     put_str_hex("freelist->size : ", free_list->size);
 

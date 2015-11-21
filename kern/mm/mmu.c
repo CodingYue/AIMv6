@@ -42,7 +42,7 @@ void enable_mmu(void)
 	}
 
 	/* Mapping to access physical memory */
-	for (u32 pa = 0x1000000, va = ACCESS_MEMORY_BASE, count = 0; count < 480; ++count, pa += SECTION_SIZE, va += SECTION_SIZE) {
+	for (u32 pa = ACCESS_MEMORY_PA_BASE, va = ACCESS_MEMORY_VA_BASE, count = 0; count < 480; ++count, pa += SECTION_SIZE, va += SECTION_SIZE) {
 		mmu_section_map(va, pa);
 	}
 

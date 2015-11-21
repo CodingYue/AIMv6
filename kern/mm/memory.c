@@ -21,6 +21,7 @@ page_block_t *page_bound_0x400 = NULL;
 
 u32 alloc_align(u32 boundary)
 {
+	/* 512 Bytes align */
 	if (boundary == 0x200) {
 		if (page_bound_0x200 == NULL || page_bound_0x400->size == 0) {
 			page_bound_0x200 = alloc_pages(1);
@@ -28,6 +29,7 @@ u32 alloc_align(u32 boundary)
 		page_bound_0x200->size -= 0x200;
 		return page_bound_0x200->pa + page_bound_0x200->size;
 	}
+	/* 1KB align */
 	if (boundary == 0x400) {
 		if (page_bound_0x400 == NULL || page_bound_0x400->size == 0) {
 			page_bound_0x400 = alloc_pages(1);
@@ -35,6 +37,7 @@ u32 alloc_align(u32 boundary)
 		page_bound_0x400->size -= 0x400;
 		return page_bound_0x400->pa + page_bound_0x400->size;
 	}
+	/* 16KB align */
 	if (boundary == 0x4000) {
 		page_block_t *block = alloc_pages(7);
 		u32 pa;
@@ -47,14 +50,19 @@ u32 alloc_align(u32 boundary)
 	}
 	return NULL;
 }
+#define __PAGE_TABLE_FLAG 0x1E1
+#define __SMALL_PAGE_FLAG 0x812
 void page_map(u32 va, u32 pa, u32 mtb_va)
 {
 	u32* mtb_pte = (u32 *) mtb_va;
 	mtb_pte += (va >> 20);
 
-	if ((*mtb_pte & 0x3) == 0) {
-		*mtb_pte = alloc_align(1);
+	if ((*mtb_pte & 0x3) != 1) {
+		*mtb_pte = alloc_align(0x400) + __PAGE_TABLE_FLAG;
 	}
+	u32 *l2tb_pte = (u32*) *mtb_pte - __PAGE_TABLE_FLAG + ACCESS_MEMORY_VA_BASE - ACCESS_MEMORY_PA_BASE;
+	l2tb_pte += (va >> 12) & 0xff;
+	*l2tb_pte = ((pa >> 12) << 12) + __SMALL_PAGE_FLAG;
 }
 void memory_init()
 {
@@ -85,7 +93,7 @@ void memory_init()
 
 
 	/* First page block */
-	free_list = (page_block_t *) ACCESS_MEMORY_BASE;
+	free_list = (page_block_t *) ACCESS_MEMORY_VA_BASE;
 	free_list->size = (480-16)<<20;
 	free_list->next = NULL;
 	free_list->pa = 16<<20;
