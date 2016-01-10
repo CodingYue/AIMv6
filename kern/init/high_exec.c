@@ -58,6 +58,9 @@ void high_exec()
     put_str_hex("freelist->pa : ", free_list->pa);
     put_str_hex("freelist->size : ", free_list->size);
 
+    interrupt_init();
+    SWI();
+
 	uart_spin_puts("FINISHED!\r\n");
 
 	while(1);

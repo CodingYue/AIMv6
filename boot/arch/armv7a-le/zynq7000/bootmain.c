@@ -47,8 +47,8 @@ void mbr_bootmain(void)
 
 	uart_spin_puts("Bootload Finished, Good Luck!\r\n");
 
-	int (*main)(void) = (int*) elfhdr->e_entry;
-	main();
+	int (*kernel_entry)(void) = (int*) elfhdr->e_entry;
+	kernel_entry();
 
 spin:
 	while (1);

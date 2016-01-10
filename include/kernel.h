@@ -11,12 +11,16 @@
 #ifndef _KERNEL_H
 #define _KERNEL_H
 
+#define KERNEL
+
 #include <sys/types.h>
 #include <drivers/serial/uart.h>
 #include <drivers/sd/sd-zynq7000.h>
 #include <drivers/misc/dtb-zynq7000.h>
 #include <sleep.h>
 #include <asm/io.h>
+#include <asm/irq.h>
+#include <exception.h>
 
 void low_exec();
 void puthex(u32);
@@ -56,5 +60,18 @@ void high_exec();
 #define DEVICE_BASE 0xE0000000
 #define ACCESS_MEMORY_VA_BASE 0xe1000000
 #define ACCESS_MEMORY_PA_BASE 0x1000000
+
+/* STACK LAYOUT */
+
+#define KERN_STACK 0xE0000000
+#define SVC_STACK 0xDFC00000
+#define IRQ_STACK 0xDFBF0000
+
+/* INTERRUPT */
+#define     USER_MODE   0b10000
+#define     SYS_MODE    0b11111
+#define     IRQ_MODE    0b10010
+#define     SVC_MODE    0b10011
+
 
 #endif

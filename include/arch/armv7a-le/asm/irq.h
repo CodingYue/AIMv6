@@ -33,7 +33,7 @@
 #include <asm/io.h>
 #include <drivers/misc/dtb-zynq7000.h>
 
-/* 
+/*
  * You won't want to use ICC and ICD outside the kernel, in places like MBR or
  * preload.
  */
@@ -83,12 +83,12 @@ static inline void icc_disable()
 
 static inline void icd_enable()
 {
-	out32(icd_base + ICD_IDR_OFFSET, 0x1);
+	out32(icd_base + ICD_IIDR_OFFSET, 0x1);
 }
 
 static inline void icd_disable()
 {
-	out32(icd_base + ICD_IDR_OFFSET, 0x0);
+	out32(icd_base + ICD_IIDR_OFFSET, 0x0);
 }
 
 static inline void irq_enable()
@@ -152,4 +152,3 @@ static inline void interrupt_disable()
 }
 
 #endif /* _ASM_IRQ_H */
-

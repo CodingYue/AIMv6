@@ -45,7 +45,8 @@ MBR_OBJS	=   boot/arch/$(ARCH)/$(MACH)/vector.o \
 				boot/arch/$(ARCH)/$(MACH)/bootmain.o
 
 
-DRIVER_OBJS = drivers/serial/uart-zynq7000.o \
+DRIVER_OBJS = drivers/misc/dtb-zynq7000.o \
+		   drivers/serial/uart-zynq7000.o \
 		   drivers/serial/uart.o \
 		   drivers/clock/gtc-a9mpcore.o \
 		   drivers/sd/sd-zynq7000.o
@@ -60,9 +61,12 @@ DRIVER_OBJS = drivers/serial/uart-zynq7000.o \
 KERN_OBJS = kern/init/high_exec.o \
 			$(DRIVER_OBJS) \
 			kern/mm/memory.o \
+			kern/mm/mmu.o \
 			kern/kernel.o \
 			kern/init/low_exec.o \
-			kern/mm/mmu.o
+			kern/exception/interrupt.o \
+			kern/exception/interrupt_asm.o \
+			kern/kernel_entry.o
 			
 
 all: firmware.bin mbr.bin kernel.elf
