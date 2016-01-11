@@ -28,10 +28,6 @@ static inline unsigned int *get_vectors_address(void)
 void set_sp(u32 mode, u32 ret_mode, u32 sp) 
 {
     asm volatile(
-        "MOV R8, FP"
-    );
-
-    asm volatile(
         "MRS R12, CPSR;"
         "BIC R12, R12, #0x1F;"
         "ORR R12, R12, %0;"
@@ -41,8 +37,7 @@ void set_sp(u32 mode, u32 ret_mode, u32 sp)
     );
 
     asm volatile(
-        "MOV FP, %0;"
-        "MOV SP, FP;"
+        "MOV SP, %0;"
         :
         :"r"(sp)
         :
@@ -56,10 +51,6 @@ void set_sp(u32 mode, u32 ret_mode, u32 sp)
         :
         : "r"(ret_mode)
         : "r12"
-    );
-
-    asm volatile(
-        "MOV FP, R8"
     );
 }
 

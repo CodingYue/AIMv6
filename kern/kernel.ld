@@ -21,6 +21,7 @@ SECTIONS
 		*sd-zynq7000.o
 		*uart-zynq7000.o
 		*interrupt.o
+		*process.o
 	}
 
 	.low : {
@@ -35,4 +36,4 @@ SECTIONS
 	.bss : {
 		*(.bss)
 	}
-}		
+}

@@ -19,7 +19,7 @@
 page_block_t *page_bound_0x200 = NULL;
 page_block_t *page_bound_0x400 = NULL;
 
-u32 alloc_align(u32 boundary)
+u32 kalloc_align(u32 boundary)
 {
 	/* 512 Bytes align */
 	if (boundary == 0x200) {
@@ -49,6 +49,10 @@ u32 alloc_align(u32 boundary)
 		return pa;
 	}
 	return NULL;
+}
+u32 alloc_align(u32 boundary)
+{
+	return kalloc_align(boundary) + ACCESS_MEMORY_VA_BASE - ACCESS_MEMORY_PA_BASE;
 }
 #define __PAGE_TABLE_FLAG 0x1E1
 #define __SMALL_PAGE_FLAG 0x812

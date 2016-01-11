@@ -66,7 +66,8 @@ KERN_OBJS = kern/init/high_exec.o \
 			kern/init/low_exec.o \
 			kern/exception/interrupt.o \
 			kern/exception/interrupt_asm.o \
-			kern/kernel_entry.o
+			kern/kernel_entry.o \
+			kern/sched/process.o
 			
 
 all: firmware.bin mbr.bin kernel.elf

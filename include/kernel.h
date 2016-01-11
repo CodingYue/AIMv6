@@ -21,6 +21,7 @@
 #include <asm/io.h>
 #include <asm/irq.h>
 #include <exception.h>
+#include <process.h>
 
 void low_exec();
 void puthex(u32);

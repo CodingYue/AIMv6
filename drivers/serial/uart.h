@@ -22,6 +22,8 @@
 #endif
 
 void uart_spin_puts(const char *str);
+void puthex(u32);
+void put_str_hex(const char *str, u32);
 ssize_t uart_spin_printf(const char *fmt, ...);
 ssize_t uart_spin_vprintf(const char *fmt, va_list ap);
 
