@@ -41,7 +41,7 @@ void high_exec()
     put_str_hex("freelist->size : ", free_list->size);
 
     interrupt_init();
-    SWI();
+    handler_test();
 
     create_first_process();
 

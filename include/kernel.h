@@ -17,11 +17,13 @@
 #include <drivers/serial/uart.h>
 #include <drivers/sd/sd-zynq7000.h>
 #include <drivers/misc/dtb-zynq7000.h>
+#include <drivers/clock/gtc-a9mpcore.h>
 #include <sleep.h>
 #include <asm/io.h>
 #include <asm/irq.h>
 #include <exception.h>
 #include <process.h>
+#include <scheduler.h>
 
 void low_exec();
 void puthex(u32);
@@ -32,9 +34,10 @@ void high_exec();
  *	2MB NO USE
  *	4MB MTB
  *	10MB KERNEL
- *	1536MB FREE MEMORY
+ *	1024MB FREE MEMORY
  *	480MB MAPPING PHYSICAL ADDRESS
  *	16MB KERN_STACK
+ *  512MB DEVICE BASE
  */
 
 /*		
@@ -59,14 +62,14 @@ void high_exec();
 #define KERN_MTB_PA 0x200000
 #define KERN_MTB_VA 0x80200000
 #define DEVICE_BASE 0xE0000000
-#define ACCESS_MEMORY_VA_BASE 0xe1000000
+#define ACCESS_MEMORY_VA_BASE 0xC1000000
 #define ACCESS_MEMORY_PA_BASE 0x1000000
 
 /* STACK LAYOUT */
 
 #define KERN_STACK 0xE0000000
-#define SVC_STACK 0xDFC00000
-#define IRQ_STACK 0xDFBF0000
+#define SVC_STACK 0xDF000000
+#define IRQ_STACK 0xDF100000
 
 /* INTERRUPT */
 #define     USER_MODE   0b10000

@@ -47,5 +47,6 @@ u64 gtc_get_time();
 #define GTC_COMPARATOR_LO_OFFSET	0x10
 #define GTC_COMPARATOR_HI_OFFSET	0x14
 #define GTC_INCREMENT_OFFSET		0x18
-
+void set_clock(u64);
+void enable_gtc_interrupt();
 #endif /* _DRIVERS_CLOCK_GTC_A9MPCORE */

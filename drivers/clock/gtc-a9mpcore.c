@@ -13,6 +13,7 @@
 #ifdef GTC_A9MPCORE
 
 #include <sys/types.h>
+#include <asm/irq.h>
 #include <asm/io.h>
 
 #include <drivers/clock/gtc-a9mpcore.h>
@@ -50,6 +51,50 @@ void usleep(int usec)
 	do {
 		time1 = gtc_get_time();
 	} while (time1 < time);
+}
+
+void enable_gtc_interrupt()
+{
+	// enable gtc interrupt
+	u32 r = in32(icd_base + ICD_ISER_OFFSET);
+	r |= 1 << 27;
+	out32(icd_base + ICD_ISER_OFFSET, r);
+
+	// set priority
+
+	r = in32(icd_base + ICD_IPR_OFFSET + 24);
+	r &= 0x00FFFFFF;
+	r |= 0x80000000;
+	out32(icd_base + ICD_IPR_OFFSET + 24, r);
+
+	// set target cpus.
+	r = in32(icd_base + ICD_IPTR_OFFSET + 24);
+	r &= 0x00FFFFFF;
+	r |= 0xFF000000;
+	out32(icd_base + ICD_IPTR_OFFSET + 24, r);
+
+	// IRQ enable
+
+	r = in32(GTC_BASE + GTC_CTRL_OFFSET);
+	r |= 1<<2;	
+	out32(GTC_BASE + GTC_CTRL_OFFSET, r);
+
+}
+
+void set_clock(u64 t)
+{
+	u32 r;
+
+	r = in32(GTC_BASE + GTC_CTRL_OFFSET);
+	r &= ~(1 << 1);
+	out32(GTC_BASE + GTC_CTRL_OFFSET, r);
+
+	out32(GTC_BASE + GTC_COMPARATOR_LO_OFFSET, (u32) (t & 0xFFFFFFFF));
+	out32(GTC_BASE + GTC_COMPARATOR_HI_OFFSET, (u32) (t >> 32));
+
+	r = in32(GTC_BASE + GTC_CTRL_OFFSET);
+	r |= 1 << 1;
+	out32(GTC_BASE + GTC_CTRL_OFFSET, r);
 }
 
 #endif /* GTC_A9MPCORE */

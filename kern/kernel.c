@@ -28,7 +28,7 @@ int main(void)
 		"movs fp, sp\n\t"
 		"blx high_exec\n\t"
 		:
-		:"r"(DEVICE_BASE)
+		:"r"(KERN_STACK)
 		:
 	);
 	return 0;

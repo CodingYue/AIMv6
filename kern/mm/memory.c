@@ -98,7 +98,7 @@ void memory_init()
 
 	/* First page block */
 	free_list = (page_block_t *) ACCESS_MEMORY_VA_BASE;
-	free_list->size = (480-16)<<20;
+	free_list->size = 480<<20;
 	free_list->next = NULL;
 	free_list->pa = 16<<20;
 

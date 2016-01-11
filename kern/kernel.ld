@@ -22,6 +22,7 @@ SECTIONS
 		*uart-zynq7000.o
 		*interrupt.o
 		*process.o
+		*scheduler.o
 	}
 
 	.low : {

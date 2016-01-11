@@ -19,10 +19,6 @@ struct {
 	proc_t proc[NPROC]
 } ptable;
 
-void context_swich()
-{
-
-}
 
 void init_process(proc_t *p)
 {
@@ -37,7 +33,7 @@ void init_process(proc_t *p)
 	sp -= 4;
 	//*(u32 *) sp = (u32) trapret;
 	sp -= sizeof *p->context;
-	p->context = (context_t*) sp;
+	p->context = (struct context*) sp;
 	p->parent = 0;
 	p->killed = false;
 

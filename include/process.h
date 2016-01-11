@@ -16,9 +16,9 @@
 
 enum procstate { UNUSED, EMBRYO, READY, BLOCK, RUNNING, ZOMBIE, SLEEPING};
 
-typedef struct context {
+struct context {
 	u32 PC, R[15], CPSR, SPSR;
-} context_t;
+};
 
 typedef struct proc {
 	u32 sz;
@@ -26,12 +26,12 @@ typedef struct proc {
 	u32 pid;
 	enum procstate state;
 	u8 *kstack;
-	//struct trapframe 
 	struct proc *parent;
-	context_t *context;
+	struct context *context;
 	int killed;
 } proc_t;
 
+proc_t *rootproc;
 void create_first_process();
 proc_t *alloc_proc();
 
