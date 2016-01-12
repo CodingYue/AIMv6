@@ -70,6 +70,7 @@ void high_exec();
 #define KERN_STACK 0xE0000000
 #define SVC_STACK 0xDF000000
 #define IRQ_STACK 0xDF100000
+#define SCHED_STACK 0xDF000000
 
 /* INTERRUPT */
 #define     USER_MODE   0b10000

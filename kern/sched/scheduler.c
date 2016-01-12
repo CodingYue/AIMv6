@@ -11,32 +11,16 @@
 
 #include <kernel.h>
 
-struct cpu cpus[NCPU];
+static struct cpu cpus[NCPU];
 
-struct queue {
-	//struct spinlock lock;
-	struct proc *proc[NPROC];
-	int front, tail;
-
-} rdy_que;
-
-
-void push(struct queue *rdy, struct proc *p) {
-	//acquire_lock(&rdy->lock);
-
-	rdy->tail = (rdy->tail + 1) % NPROC;
-	rdy->proc[rdy->tail] = p;
-	//release_lock(&rdy->lock);
+void copy_context(struct context *cpu_ctx, struct context *ctx)
+{
+	cpu_ctx->cpsr = ctx->cpsr;
+	for (int i = 0; i < 16; ++i) cpu_ctx->r[i] = ctx->r[i];
+	cpu_ctx->ttb = ctx->ttb;
 }
-struct proc* pop(struct queue *rdy) {
-	//acquire_lock(&rdy->lock);
-	if (rdy->front == rdy->tail) return 0;
-	rdy->front = (rdy->front + 1) % NPROC;
-	struct proc *p = rdy->proc[rdy->front];
-		//release_lock(&lock);
-	return p;
-}
-int get_cur_cpu()
+
+struct cpu *get_cur_cpu()
 {
 	int res = -1;
 	asm volatile (
@@ -45,11 +29,115 @@ int get_cur_cpu()
 		:
 		:
 	);
-	return res & 0x3;
+	return &cpus[res & 0x3];
+}
+
+void switch_to(const struct context* ctx)
+{
+	put_str_hex("", ctx->r[15]);
+	struct cpu *cpu = get_cur_cpu();
+	copy_context(&(cpu->next_context), ctx);
+
+// change ttb
+	asm volatile(
+		"MOV R0, %0;"
+		"MCR p15, 0, R0, c2, c0, 0;" // change ttb
+		"MOV R0, #0;"
+		"MCR P15, 0, R0, C8, C7, 0;" // invalidate TLBs
+		"DSB;"
+		"ISB"
+		:
+		:"r"(cpu->next_context.ttb)
+		:"r0"
+	);
+
+	// load banked R13 R14
+	asm volatile(		
+		"MOV R0, %0;"
+		"LDMFD R0, {R13-R14}" 
+		:
+		:"r"(cpu->next_context.r+13)
+		:
+	);
+
+	// switch to SVC mode
+ 	asm volatile(
+        "MRS R12, CPSR;"
+        "BIC R12, R12, #0x1F;"
+        "ORR R12, R12, %0;"
+        "MSR CPSR_c, R12"
+        :
+        :"r"(0b10011)
+    );
+
+ 	// save next_context.cpsr to spsr for further restoring
+ 	put_str_hex("cpsr = ", cpu->next_context.cpsr);
+
+    asm volatile (
+    	"MSR SPSR, %0;"
+    	:
+    	:"r"(cpu->next_context.cpsr)
+    	:
+    );
+
+    // load next_context.r[PC] to LR
+    asm volatile(
+    	"MOV r0, %0;"
+    	"LDMFD R0, {R14}"
+    	:
+    	:"r"(cpu->next_context.r+15)
+    	:
+    );
+
+    // load general registers
+	asm volatile(		
+		"MOV R0, %0;"
+		"LDMFD R0, {R0-R12}"
+		:
+		:"r"(cpu->next_context.r)
+		:
+	);
+
+	// jump to next_context.PC and restore CPSR
+	asm volatile(
+		"MOVS PC, LR"
+	);
 }
 
 void schedule()
 {
-	rdy_que.front = rdy_que.tail = 0;
-	push(&rdy_que, rootproc);
+	uart_spin_puts("SCHDULING: BEGIN\r\n");
+	struct context *sched = (get_cur_cpu())->scheduler;
+
+	struct proc *proc = get_procs();
+	put_str_hex("ptable.proc address: ", proc);
+
+
+	for (int i = 0; ; i = (i + 1) & (NPROC - 1)) {
+		if (proc[i].state == READY) {
+			proc[i].state = RUNNING;
+
+			// save CPSR
+			asm volatile(
+				"MOV R0, %0;"
+				"MRS R0, CPSR;"
+				"STR R0, [%0];"
+				:
+				:"r"(sched)
+				:"r0"
+			);
+			//save R0 - R0-R15
+			asm volatile(
+				"MOV R0, %0;"
+				"STMFD R0, {R0-R14};"
+				"STR PC, [%0, #60]" // point to the instruction after switch_to
+				:
+				:"r"(sched->r)
+				:"r0"
+			);
+
+			switch_to(proc[i].context);
+		}
+	}
+
 }

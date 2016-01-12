@@ -14,14 +14,14 @@
 
 #define NCPU 1
 
-typedef struct cpu {
+struct cpu {
 	u8 id;
 	bool started;
+	struct context next_context;
 	struct context *scheduler;
 	struct proc *proc;
 };
 
-struct cpu cpus[NCPU];
-int get_cur_cpu();
-
+struct cpu *get_cur_cpu();
+void schedule();
 #endif

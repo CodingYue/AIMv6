@@ -12,26 +12,27 @@
 #define _PROCESS_H
 
 #define NPROC 64
-#define KSTACK_SIZE 0x4000
+#define DEFAULT_PROC_CPSR 0x10
+#define DEFAULT_PROC_KERN_STACK 0xE0000000
+#define DEFAULT_PROC_USER_STACK 0x80000000
 
 enum procstate { UNUSED, EMBRYO, READY, BLOCK, RUNNING, ZOMBIE, SLEEPING};
 
 struct context {
-	u32 PC, R[15], CPSR, SPSR;
+	u32 cpsr, r[16];
+	void *ttb;
 };
 
 typedef struct proc {
-	u32 sz;
 	u32 pgaddr;
 	u32 pid;
 	enum procstate state;
-	u8 *kstack;
 	struct proc *parent;
 	struct context *context;
 	int killed;
 } proc_t;
 
-proc_t *rootproc;
+struct proc *get_procs();
 void create_first_process();
 proc_t *alloc_proc();
 

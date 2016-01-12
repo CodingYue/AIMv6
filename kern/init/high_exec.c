@@ -41,11 +41,26 @@ void high_exec()
     put_str_hex("freelist->size : ", free_list->size);
 
     interrupt_init();
-    handler_test();
+    //handler_test();
 
     create_first_process();
 
-	uart_spin_puts("FINISHED!\r\n");
 
+    struct cpu *cpu = get_cur_cpu();
+    struct context *sched = alloc_align(0x200);
+
+    cpu->scheduler = sched;
+
+    sched->r[11] = sched->r[13] = SCHED_STACK;
+    sched->r[14] = 0;
+    sched->ttb = KERN_MTB_PA;
+    sched->r[15] = schedule;
+    sched->cpsr = 0b0111011111;
+
+    put_str_hex("schedule address : ", schedule);
+
+    switch_to(sched);
+
+    uart_spin_puts("FINISHED!\r\n");
 	while(1);
 }

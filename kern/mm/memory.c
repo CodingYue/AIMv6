@@ -64,7 +64,10 @@ void page_map(u32 va, u32 pa, u32 mtb_va)
 	if ((*mtb_pte & 0x3) != 1) {
 		*mtb_pte = alloc_align(0x400) + __PAGE_TABLE_FLAG;
 	}
-	u32 *l2tb_pte = (u32*) *mtb_pte - __PAGE_TABLE_FLAG + ACCESS_MEMORY_VA_BASE - ACCESS_MEMORY_PA_BASE;
+
+	u32 *l2tb_pte = (u32*) ((*mtb_pte >> 10) << 10) + ACCESS_MEMORY_VA_BASE - ACCESS_MEMORY_PA_BASE;
+
+	puthex(l2tb_pte);
 	l2tb_pte += (va >> 12) & 0xff;
 	*l2tb_pte = ((pa >> 12) << 12) + __SMALL_PAGE_FLAG;
 }

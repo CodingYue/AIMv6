@@ -11,32 +11,72 @@
 
 #include <kernel.h>
 
-int pidcnt = 0;
-proc_t *rootproc;
+static int pidcnt = 0;
+static proc_t *rootproc;
 
-struct {
+
+/*
+ *  0x402
+ *  AP[2:0] 001, Domain 0000
+ *  0x422
+ *	AP[2:0] 001, Domain 0001
+ *	0xC02
+ *	AP[2:0] 011, Domain 0001	
+ */
+
+struct ppp {
 	// struct spinlock lock;
 	proc_t proc[NPROC]
-} ptable;
+};
 
+static struct ppp ptable;
 
-void init_process(proc_t *p)
+struct proc* get_procs()
 {
-	p->sz = 0x8000;
-	p->pgaddr = alloc_align(0x4000); // Level 1 Page Table
+	put_str_hex("ptable.proc address: ", ptable.proc);
+	return ptable.proc;
+}
+
+u32 create_page_table()
+{
+	uart_spin_puts("PROCESS : create page table\r\n");
+	u32 *L1_Table = alloc_align(0x4000);
+	u32 *KERN_TTB = (u32*) KERN_MTB_VA;
+
+	for (u32 i = 2048; i < 4096; ++i) {
+		L1_Table[i] = ((KERN_TTB[i] >> 20) << 20) | 0x422;
+	}
+
+	for (u32 i = 0; i < 2048; ++i) {
+		L1_Table[i] = 0;
+	}
+
+	page_map(DEFAULT_PROC_USER_STACK - 0x1000, alloc_pages(1), L1_Table);
+	page_map(DEFAULT_PROC_KERN_STACK - 0x1000, alloc_pages(1), L1_Table);
+	uart_spin_puts("PROCESS : create page table finished\r\n");
+	put_str_hex("L1_table PA: ", L1_Table - ACCESS_MEMORY_VA_BASE + ACCESS_MEMORY_PA_BASE);
+
+	return L1_Table - ACCESS_MEMORY_VA_BASE + ACCESS_MEMORY_PA_BASE;
+}
+
+void init_process(struct proc *p, u32 addr)
+{
+	uart_spin_puts("PROCESS : initializing process\r\n");
+	
 	p->pid = pidcnt++;
 	p->state = EMBRYO;
-	p->kstack = alloc_pages(4);
-	char *sp = p->kstack + KSTACK_SIZE;
-	// sp -= sizeof *p->tf;
-	//p->tf = sp;
-	sp -= 4;
-	//*(u32 *) sp = (u32) trapret;
-	sp -= sizeof *p->context;
-	p->context = (struct context*) sp;
-	p->parent = 0;
-	p->killed = false;
+	p->pgaddr = create_page_table(); // Level 1 Page Table
+	p->context = alloc_align(0x200);
+	
+	p->context->ttb = create_page_table();
+	p->context->cpsr = DEFAULT_PROC_CPSR;
+	/* USER STACK */
+	p->context->r[13] = p->context->r[11] = DEFAULT_PROC_USER_STACK;
+	p->context->r[15] = addr;
+	p->killed = 0;
 
+	uart_spin_puts("PROCESS : initializing process finished\r\n");
+	//proc->context[14] = (void*) kill();
 }
 
 proc_t *alloc_proc()
@@ -45,7 +85,7 @@ proc_t *alloc_proc()
 	proc_t *p = 0;
 	for (p = ptable.proc; p < &ptable.proc[NPROC]; ++p) {
 		if (p->state == UNUSED) {
-			init_process(p);
+			init_process(p, 0);
 			break;
 		}
 	}
@@ -53,20 +93,19 @@ proc_t *alloc_proc()
 	return p;
 }
 
-void sayhello(proc_t *proc)
-{
-	put_str_hex("HELLO, I AM PROCESS #", proc->pid);
-}
-
 void create_first_process()
 {
 	uart_spin_puts("PROCESS : creating first process\r\n");
 	for (proc_t *p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
 		p->state = UNUSED;
+		p->pid = 7777;
 	}
 	rootproc = alloc_proc();
+
+	put_str_hex("root proc pid : ", rootproc->pid);
+	put_str_hex("root proc cpsr : ", rootproc->context->cpsr);
+
 	rootproc->state = READY;
 	uart_spin_puts("PROCESS : creating first process finished\r\n");
-	sayhello(rootproc);
 }
 

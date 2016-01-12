@@ -101,42 +101,10 @@ void print_cpsr()
 	put_str_hex("CPSR = ", cpsr);
 }
 
-u32 read_sp(u32 mode, u32 ret_mode)
-{
-	asm volatile(
-		"mrs r0, cpsr\n"
-		"bic r0, r0, #0x1F\n"
-		"orr r0, r0, %0\n"
-		"msr cpsr, r0\n"
-		:
-		: "r"(mode)
-		: "r2"
-	);
-    u32 sp = 0;
-    asm volatile(
-        "mrs r0, cpsr\n"
-        "bic r0, r0, #0x1F\n"
-        "orr r0, r0, %0\n"
-        "msr cpsr, r0\n"
-        :
-        : "r"(ret_mode)
-        : "r2"
-    );
-    asm volatile (
-        "mov %0, sp\n"
-        : "=r" (sp)
-        : 
-        : "r0"
-    );
-}
-
 void C_SVC_handler()
 {
 	uart_spin_puts("SVC Handler\r\n");
     print_cpsr();
-
-    u32 sys_sp = read_sp(SYS_MODE, SVC_MODE);
-    put_str_hex("system sp = ", sys_sp);
 
 /*
     struct cpu *cpu = &cpus[get_cur_cpu()];
@@ -190,8 +158,6 @@ void C_IRQ_handler()
         puthex(id);
     }
 
-    u32 sys_sp = read_sp(SYS_MODE, SVC_MODE);
-    put_str_hex("system sp = ", sys_sp);
     end_of_irq(id);
 }
 
